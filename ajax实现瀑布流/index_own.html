@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实现瀑布流效果</title>
+     <style>
+         *{
+            margin: 0px;
+            padding: 0px;
+        }
+        .wrapper{
+            width: 960px;
+            border: 1px solid black;
+            background-color: #fff;
+            margin: 0px auto;
+       
+        }
+        .wrapper::after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+        .item{
+            float:left;
+            width: 25%;
+            list-style: none; 
+        }
+        .item div{
+            background-color: #fff;
+            margin: 10px;
+            padding: 10px;
+        }
+        .item img{
+            width: 100%;
+        } 
+    </style> 
+</head>
+
+<body>
+  <ul class="wrapper">
+      <li class="item">
+      
+      </li>
+      <li class="item">
+         
+      </li>
+      <li class="item">
+        
+      </li>
+      <li class="item">
+         
+      </li>
+  </ul>
+
+
+
+  <script src="./ajax.js"></script>
+  <script>
+    //   使用Ajax渲染页面
+    function getData (){
+        ajax({
+            method:'get',
+            url:'./data.json',
+            success:function(data){
+                rendaerDome(data)
+            }
+
+        })
+    }
+    getData ()
+
+
+
+    //将其函数进行渲染出来，以保证其data能进行插入进去
+    function rendaerDome(data){
+        var oLi =document.getElementsByClassName('item');
+        data.forEach(function(item){
+            // 需要拿到其短板的值然后放进去
+            var index = getMinLi().minIndex;
+            var dom=createImg(item);
+            oLi[index].appendChild(dom)
+        })
+    }
+
+
+
+
+    // 需要拿到其最短板然后放入到页面当中
+    function getMinLi(){
+    var items = document.getElementsByClassName('item');
+    // 定义一个最短板的索引
+    var minIndex = 0 ; 
+    // 判断其最短板的一个高度
+    var minHeight = items[0].offsetHeight;
+
+
+    for (var i =0; i<items.length;i++){
+        if(minHeight>items[i].offsetHeight){
+            minIndex = i ;
+            minHeight =items[i].offsetHeight
+        }
+    }
+    return{
+        minHeight,
+        minIndex
+    }
+    }
+
+
+
+    // 需要找到其Item的高度
+    var imgWidth = document.querySelector('.item').offsetWidth-40;
+    function createImg(data){
+        var oDiv = document.createElement('div');
+        var img = new Image();
+        img.src =data.img;
+        img.height = imgWidth *data.height/data.width;
+        var oP =document.createElement('p');
+        oP.innerText=data.desc;
+        oDiv.appendChild(img);
+        oDiv.appendChild(oP);
+        return oDiv;
+    }
+
+// 判断其是否是在请求状态
+    var lock =false;
+    window.onscroll=function(){
+        // 判断其可最短列  和 滚动区+当前的视口的大小
+        if(getMinLi().minHeight<window.pageYOffset+window.innerHeight){
+          if(!lock){
+            lock =true
+            getData()
+        }
+        }
+    }
+  </script>
+</body>
+
+</html>

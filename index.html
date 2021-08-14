@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瀑布流</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        .wrapper {
+            width: 960px;
+            border: 1px solid #000;
+            margin: 0 auto;
+            background-color: #eee;
+        }
+
+        .wrapper::after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+
+        .item {
+            float: left;
+            width: 25%;
+            list-style: none;
+        }
+
+        .item div {
+            background-color: #fff;
+            margin: 10px;
+            padding: 10px;
+        }
+
+        .item img {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 
+        1. 封装ajax
+            ajax: 主要的用途: 数据交互/网络通信
+                参数：   
+                    1. method: 请求方式
+                    2. url: 请求地址
+                    3. data: 请求参数（数据）
+                    4. isAsync: 是否异步
+                    5. success: 成功拿到数据之后做的功能
+                    6. error: 失败的回调函数 
+        2. 实现瀑布流
+     -->
+    <ul class="wrapper">
+        <li class="item">
+            <!-- <div>
+                 <img src="./image/1.jpg" alt="">
+                 <p>第一张图片</p>
+             </div> -->
+        </li>
+        <li class="item">
+            <!-- <div>
+                 <img src="./image/2.jpg" alt="">
+                 <p>第一张图片</p>
+             </div> -->
+        </li>
+        <li class="item">
+            <!-- <div>
+                 <img src="./image/3.jpg" alt="">
+                 <p>第一张图片</p>
+             </div> -->
+        </li>
+        <li class="item">
+            <!-- <div>
+                 <img src="./image/4.jpg" alt="">
+                 <p>第一张图片</p>
+             </div> -->
+        </li>
+    </ul>
+    <script src="./ajax.js"></script>
+    <script>
+        function getData() {
+            ajax({
+                method: 'get',
+                url: './data.json',
+                success: function (data) {
+                    console.log(data);
+                    renderDom(data);
+                    // lock = false;
+                }
+            });
+        }
+        getData();
+        // 图片真实的宽度
+        var imgWidth = document.querySelector('.item').offsetWidth - 40;
+        //  renderDom: 渲染Dom结构 
+        function renderDom(data) {
+            // for (var i = 0; i < data.length; i++)
+            var oLi = document.getElementsByClassName('item');
+            data.forEach(function (item) {
+                // 查找最段列  并且 向最短列里面添加dom结构
+                // 最短列的索引值
+                var index = getMinLi().minIndex;
+                var dom = createImg(item);
+                oLi[index].appendChild(dom);
+            })
+        }
+
+        //  查找最短列
+        function getMinLi() {
+            // 获取到所有的Li
+            var items = document.getElementsByClassName('item');
+            // minIndex 代表的是最短列的索引值
+            var minIndex = 0;
+            // minHeight: 最短列的高度
+            var minHeight = items[0].offsetHeight;
+            // 进行比较  查找最短列
+            for (var i = 0; i < items.length; i++) {
+                // 判断当前列是否为最短列
+                if (minHeight > items[i].offsetHeight) {
+                    minIndex = i;
+                    minHeight = items[i].offsetHeight;
+                }
+            }
+
+            return {
+                // minIndex: minIndex
+                minIndex,
+                // minHeight: minHeight
+                minHeight
+            }
+
+        }
+        // 创建Img区域
+        function createImg(data) {
+            /**
+             * <div>
+                 <img src="./image/3.jpg" alt="">
+                 <p>第一张图片</p>
+                </div>
+            **/
+            var oDiv = document.createElement('div');
+            //    创建img标签
+            var img = new Image();
+            img.src = data.img;
+            // 在保留图片原来的宽高比的情况下预留img的高度
+            // 图片的原始宽高为
+            //  data.width  / data.height = img.width / img.height 
+            
+            //  img.width / (data.width / data.height)
+            img.height = imgWidth * data.height / data.width;
+            var oP = document.createElement('p');
+            oP.innerText = data.desc;
+            oDiv.appendChild(img);
+            oDiv.appendChild(oP);
+            return oDiv;
+        }
+        // lock代表当前是否正在网络请求数据的过程当中
+        // var lock = false;
+        // 延迟触发网络请求
+        var timer = null;
+
+        window.onscroll = function () {
+            // 判断当前页面当中是否出现空白区域  
+            // 如果出现空白区域，需要再次获取数据渲染页面
+            console.log(getMinLi().minHeight, window.pageYOffset, window.innerHeight)
+            console.log(getMinLi().minHeight < window.pageYOffset + window.clientHeight)
+            clearTimeout(timer);
+            // 判断  最短列 和 滚动的距离 + 当前的视口大小
+            if (getMinLi().minHeight < window.pageYOffset + window.innerHeight) {
+                // 性能优化:
+                //  1. 当当前有网络请求的时候不予以发送数据
+                // if (!lock) {
+                //     lock = true;
+                //     getData();
+                // }
+
+                // 2. 在不断的滚动滚动条的时候不进行网络请求  只有停止滚动了 才会进行请求
+                timer = setTimeout(function () {
+                    getData();
+                }, 500)
+            }
+
+        }
+    </script>
+</body>
+
+</html>
